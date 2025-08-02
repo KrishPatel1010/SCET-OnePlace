@@ -1,8 +1,9 @@
 'use client';
 import { GoogleLogin } from '@react-oauth/google';
+import { CredentialResponse } from '@react-oauth/google';
 
 export default function GoogleSignIn() {
-  const handleSuccess = async (credentialResponse: any) => {
+  const handleSuccess = async (credentialResponse: CredentialResponse) => {
     const token = credentialResponse.credential;
 
     if (token) {
