@@ -1,14 +1,11 @@
 "use client";
 
 import React, { useEffect, useId, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useOutsideClick } from "../components/hooks/use-outside-click";
 
 export default function ExpandableCard() {
-
-  const [active, setActive] = useState<(typeof cards)[number] | boolean | null>(
-    null
-  );
+  const [active, setActive] = useState<(typeof cards)[number] | boolean | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const id = useId();
 
@@ -32,193 +29,180 @@ export default function ExpandableCard() {
   useOutsideClick(ref, () => setActive(null));
 
   return (
-    <>
-          <div className="bg-blue-200 p-4 overflow-x-auto w-full my-25">
-      <AnimatePresence>
-        {active && typeof active === "object" && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/20 h-full w-full z-10"
-          />
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {active && typeof active === "object" ? (
-          <div className="fixed inset-0 my-14 grid place-items-center z-[100]">
-            <motion.button
-              key={`button-${active.title}-${id}`}
-              layout
-              initial={{
-                opacity: 0,
-              }}
-              animate={{
-                opacity: 1,
-              }}
-              exit={{
-                opacity: 0,
-                transition: {
-                  duration: 0.05,
-                },
-              }}
-              className="flex absolute top-25 right-2 lg:hidden items-center justify-center bg-white rounded-full h-6 w-6"
-              onClick={() => setActive(null)}
-            >
-              <CloseIcon />
-            </motion.button>
-            <motion.div
-              layoutId={`card-${active.title}-${id}`}
-              ref={ref}
-              className="w-full max-h-[90vh] md:w-[90%] max-w-4xl bg-white p-6 rounded-xl shadow-2xl overflow-y-auto my-75"
-            >
-              <motion.div layoutId={`image-${active.title}-${id}`}>
-                <img
-                  width={200}
-                  height={200}
-                  src={active.src}
-                  alt={active.title}
-                  className="w-full h-80 lg:h-80 sm:rounded-tr-lg sm:rounded-tl-lg object-cover object-top"
-                />
-              </motion.div>
+    <div className="bg-blue-50 min-h-screen p-6 mt-20">
+      <div className="max-w-6xl mx-auto">
+        {/* Opportunities Heading */}
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-blue-800">Opportunities</h1>
+          <p className="text-gray-600 mt-2">Browse current job openings from top companies</p>
+        </div>
 
-              <div>
-                <div className="flex justify-between items-start p-4">
-                  <div className="">
-                    <motion.h3
-                      layoutId={`title-${active.title}-${id}`}
-                      className="font-bold text-neutral-700 dark:text-neutral-200"
+        <AnimatePresence>
+          {active && typeof active === "object" && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/30 backdrop-blur-sm z-10"
+            />
+          )}
+        </AnimatePresence>
+        
+        <AnimatePresence>
+          {active && typeof active === "object" ? (
+            <div className="fixed inset-0 flex items-center justify-center z-20 p-4">
+              <motion.div
+                layoutId={`card-${active.title}-${id}`}
+                ref={ref}
+                className="w-full max-w-4xl bg-white rounded-xl shadow-xl overflow-hidden max-h-[90vh] flex flex-col"
+              >
+                <div className="relative">
+                  <img
+                    src={active.src}
+                    alt={active.title}
+                    className="w-full h-48 object-cover"
+                  />
+                  <button
+                    onClick={() => setActive(null)}
+                    className="absolute top-4 right-4 bg-white/90 hover:bg-white rounded-full p-2 shadow-md transition-all"
+                  >
+                    <CloseIcon />
+                  </button>
+                </div>
+
+                <div className="p-6 overflow-y-auto flex-1">
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">{active.title}</h2>
+                      <p className="text-gray-600 mt-1">{active.role}</p>
+                    </div>
+                    <a
+                      href={active.ctaLink}
+                      target="_blank"
+                      className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
                     >
-                      {active.title}
-                    </motion.h3>
-                    <motion.p
-                      layoutId={`description-${active.description}-${id}`}
-                      className="text-neutral-600 dark:text-neutral-400"
-                    >
-                      {active.description}
-                    </motion.p>
+                      {active.ctaText}
+                    </a>
                   </div>
 
-                  <motion.a
-                    layoutId={`button-${active.title}-${id}`}
-                    href={active.ctaLink}
-                    target="_blank"
-                    className="px-4 py-3 text-sm rounded-full font-bold bg-green-500 text-white"
-                  >
-                    {active.ctaText}
-                  </motion.a>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div className="space-y-2">
+                      <DetailItem label="Location" value={active.content().props.children[2].props.children[1]} />
+                      <DetailItem label="Openings" value={active.content().props.children[3].props.children[1]} />
+                      <DetailItem label="Drive Type" value={active.content().props.children[4].props.children[1]} />
+                    </div>
+                    <div className="space-y-2">
+                      <DetailItem label="Offer Type" value={active.content().props.children[5].props.children[1]} />
+                      <DetailItem label="Sector" value={active.content().props.children[6].props.children[1]} />
+                      <DetailItem label="Salary" value={active.content().props.children[7].props.children[1]} />
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-gray-900 mb-2">Requirements</h3>
+                    <div className="flex flex-wrap gap-2">
+                      <Tag label={active.content().props.children[8].props.children[1]} />
+                      <Tag label={active.content().props.children[9].props.children[1]} />
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <h3 className="font-semibold text-gray-900 mb-2">Job Description</h3>
+                    <p className="text-gray-600">
+                      We're looking for talented individuals to join our team. This role involves working on cutting-edge
+                      technologies and collaborating with cross-functional teams to deliver high-quality solutions.
+                    </p>
+                  </div>
                 </div>
-                <div className="pt-4 relative px-4">
-                  <motion.div
-                    layout
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="text-neutral-600 text-xs md:text-sm lg:text-base h-40 md:h-fit pb-10 flex flex-col items-start gap-4 overflow-auto dark:text-neutral-400 [mask:linear-gradient(to_bottom,white,white,transparent)] [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch]"
+              </motion.div>
+            </div>
+          ) : null}
+        </AnimatePresence>
+
+        <div className="max-w-4xl mx-auto space-y-4">
+          {cards.map((card) => (
+            <motion.div
+              layoutId={`card-${card.title}-${id}`}
+              key={`card-${card.title}-${id}`}
+              onClick={() => setActive(card)}
+              whileHover={{ scale: 1.01 }}
+              className="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer"
+            >
+              <div className="flex items-center gap-4">
+                <motion.div layoutId={`image-${card.title}-${id}`}>
+                  <img
+                    src={card.src}
+                    alt={card.title}
+                    className="h-14 w-14 rounded-lg object-cover"
+                  />
+                </motion.div>
+                <div className="flex-1">
+                  <motion.h3
+                    layoutId={`title-${card.title}-${id}`}
+                    className="font-semibold text-gray-900"
                   >
-                    {typeof active.content === "function"
-                      ? active.content()
-                      : active.content}
-                  </motion.div>
+                    {card.title}
+                  </motion.h3>
+                  <motion.p
+                    layoutId={`description-${card.description}-${id}`}
+                    className="text-gray-600 text-sm"
+                  >
+                    {card.description}
+                  </motion.p>
                 </div>
+                <motion.button
+                  layoutId={`button-${card.title}-${id}`}
+                  className="px-4 py-2 text-sm rounded-lg font-medium bg-blue-50 hover:bg-blue-100 text-blue-600 transition-colors"
+                >
+                  {card.ctaText}
+                </motion.button>
               </div>
             </motion.div>
-          </div>
-        ) : null}
-      </AnimatePresence>
-        
-      <ul className="max-w-2xl mx-auto w-full gap-4">
-        {cards.map((card, index) => (
-<motion.div
-  layoutId={`card-${card.title}-${id}`}
-  key={`card-${card.title}-${id}`}
-  onClick={() => setActive(card)}
-  className="p-4  my-3 w-full flex flex-row items-center justify-between gap-4 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl cursor-pointer"
->
-  <div className="flex flex-row gap-4 items-center">
-    <motion.div layoutId={`image-${card.title}-${id}`}>
-      <img
-        width={100}
-        height={100}
-        src={card.src}
-        alt={card.title}
-        className="h-14 w-14 rounded-lg object-cover object-top"
-      />
-    </motion.div>
-    <div>
-      <motion.h3
-        layoutId={`title-${card.title}-${id}`}
-        className="font-medium text-neutral-800 dark:text-neutral-200"
-      >
-        {card.title}
-      </motion.h3>
-      <motion.p
-        layoutId={`description-${card.description}-${id}`}
-        className="text-neutral-600 dark:text-neutral-400"
-        
-      >
-        {card.description}
-\
-      </motion.p>
-    </div>
-  </div>
-  <motion.button
-    layoutId={`button-${card.title}-${id}`}
-    className="px-4 py-2 text-sm rounded-full font-bold bg-gray-100 hover:bg-green-500 hover:text-white text-black"
-  >
-    {card.ctaText}
-  </motion.button>
-</motion.div>
-
-
-        ))}
-        
-      </ul>
+          ))}
+        </div>
       </div>
-
-    </>
+    </div>
   );
 }
 
-export const CloseIcon = () => {
-  return (
-    <motion.svg
-      initial={{
-        opacity: 0,
-      }}
-      animate={{
-        opacity: 1,
-      }}
-      exit={{
-        opacity: 0,
-        transition: {
-          duration: 0.05,
-        },
-      }}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-4 w-4 text-black"
-    >
-      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-      <path d="M18 6l-12 12" />
-      <path d="M6 6l12 12" />
-    </motion.svg>
-  );
-};
+const DetailItem = ({ label, value }: { label: string; value: string }) => (
+  <div>
+    <span className="text-sm text-gray-500">{label}</span>
+    <p className="font-medium text-gray-900">{value}</p>
+  </div>
+);
+
+const Tag = ({ label }: { label: string }) => (
+  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+    {label}
+  </span>
+);
+
+const CloseIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-5 w-5"
+  >
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M18 6l-12 12" />
+    <path d="M6 6l12 12" />
+  </svg>
+);
 
 const cards = [
   {
-    title: "Google", // company name
+    title: "Google",
     role: "Software Engineer",
     description: "Location: Bangalore | Criteria: CGPA > 8.0",
-    src: "https://logo.clearbit.com/google.com", // simulate company logo
+    src: "https://logo.clearbit.com/google.com",
     ctaText: "View Details",
     ctaLink: "#",
     content: () => (
@@ -281,4 +265,3 @@ const cards = [
     ),
   },
 ];
-
