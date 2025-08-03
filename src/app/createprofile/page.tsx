@@ -11,7 +11,7 @@ import type { CredentialResponse } from '@react-oauth/google';
 interface FormData {
   name: string;
   email: string;
-  enrollment: string;
+  enrollment_no: string;
   dob: string;
   contact: string;
   gender: string;
@@ -54,7 +54,7 @@ const Createprofile = () => {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
-    enrollment: '',
+    enrollment_no: '',
     dob: '',
     contact: '',
     gender: '',
@@ -159,35 +159,95 @@ const Createprofile = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!token) {
-      console.error('User not authenticated. Please sign in.');
-      return;
-    }
+// Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token) {
+      console.error('User not authenticated. Please sign in.');
+      return;
+    }
+    
+    // --- START: Data Restructuring to match your desired format ---
+    const restructuredData = {
+      name: formData.name,
+      enrollment_no: formData.enrollment_no,
+      dob: formData.dob,
+      email: formData.email,
+      googleId: token,
+      contact: formData.contact,
+      gender: formData.gender,
+      caste: formData.caste,
+      academic_details: {
+        passout_year: parseInt(academicData.passoutYear, 10), // Convert to number
+        result: {
+          ssc: {
+            percentage: parseFloat(academicData.tenthResult), // Convert to number
+            completion_year: parseInt(academicData.tenthPassoutYear, 10), // Convert to number
+          },
+          hsc: academicData.qualificationType === 'twelfth' ? {
+            percentage: parseFloat(academicData.twelfthResult), // Convert to number
+            completion_year: parseInt(academicData.twelfthPassoutYear, 10), // Convert to number
+          } : undefined, // Conditionally include or set to undefined
+          diploma: academicData.qualificationType === 'diploma' ? {
+            result: academicData.diplomaSemesterResults.reduce((acc: Record<string, number>, current, index) => {
+              acc[`sem${index + 1}`] = parseFloat(current);
+              return acc;
+            }, {} as Record<string, number>),
+            completion_year: parseInt(academicData.diplomaPassoutYear, 10), // Convert to number
+          } : undefined, // Conditionally include or set to undefined
+          degree: {
+            result: academicData.semesterResults.reduce((acc: Record<string, number>, current, index) => {
+              acc[`sem${index + 1}`] = parseFloat(current);
+              return acc;
+            }, {} as Record<string, number>),
+            completion_year: parseInt(academicData.passoutYear, 10), // You already have passoutYear
+//             cgpa: parseFloat(academicData.cgpa), // Convert to number
+            backlogs: parseInt(academicData.backlogs, 10), // Convert to number
+          },
+        },
+      },
+      address: {
+        address_line: addressData.fullAddressLine,
+        area: addressData.area,
+        city: addressData.city,
+        state: addressData.state,
+        country: addressData.country,
+        pincode: parseInt(addressData.pinCode, 10), // Convert to number
+      },
+    };
 
-    try {
-      // Send combined form data to the backend
-      const res = await fetch('http://localhost:3000/api/student/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, ...addressData, ...academicData, token }),
-      });
+    // Remove keys with 'undefined' values
+    if (!restructuredData.academic_details.result.hsc) {
+      delete restructuredData.academic_details.result.hsc;
+    }
+    if (!restructuredData.academic_details.result.diploma) {
+      delete restructuredData.academic_details.result.diploma;
+    }
 
-      const data = await res.json();
-      if (res.ok) {
-        console.log('✅ Profile created successfully:', data);
-        // Optionally redirect or show success message
-        // router.push('/dashboard');
-      } else {
-        console.error('❌ Failed to create profile:', data);
-        // Handle error, show user a message
-      }
-    } catch (error) {
-      console.error('❌ Network error or API call failed:', error);
-    }
-  };
+    console.log('Final data to be sent:', restructuredData);
+    // --- END: Data Restructuring ---
+
+    try {
+      // Send restructured data to the backend
+      const res = await fetch('http://localhost:5000/api/v1/student/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(restructuredData),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        console.log('✅ Profile created successfully:', data);
+        // Redirect or show success message
+        // router.push('/dashboard');
+      } else {
+        console.error('❌ Failed to create profile:', data);
+        // Handle error, show user a message
+      }
+    } catch (error) {
+      console.error('❌ Network error or API call failed:', error);
+    }
+  };
 
   // Load user data from localStorage on component mount
   useEffect(() => {
@@ -330,16 +390,16 @@ const Createprofile = () => {
                   />
                 </div>
                 <div>
-                  <label htmlFor="enrollment" className="block text-sm font-semibold text-gray-700 mb-1">
-                    Enrollment Number
+                  <label htmlFor="enrollment_no" className="block text-sm font-semibold text-gray-700 mb-1">
+                    enrollment Number
                   </label>
                   <input
                     type="text"
-                    id="enrollment"
-                    name="enrollment"
-                    value={formData.enrollment}
+                    id="enrollment_no"
+                    name="enrollment_no"
+                    value={formData.enrollment_no}
                     onChange={handleChange}
-                    placeholder="Enrollment Number"
+                    placeholder="enrollment_no "
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 text-gray-800 bg-gray-50"
                   />
                 </div>
@@ -403,7 +463,7 @@ const Createprofile = () => {
                     <option value="SC">SC</option>
                     <option value="ST">ST</option>
                     <option value="OBC">OBC</option>
-                    <option value="SCBC">SCBC</option>
+                    <option value="SEBC">SEBC</option>
                   </select>
                 </div>
                 <button
