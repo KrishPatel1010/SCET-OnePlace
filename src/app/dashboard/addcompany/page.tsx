@@ -1,7 +1,25 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ExpandableCard from '@/app/offer/page';
+
+interface Address {
+  address_line: string;
+  area: string;
+  city: string;
+  state: string;
+  country: string;
+  pincode: number;
+}
+
+interface CompanyData {
+  _id?: string;
+  name: string;
+  logo: string;
+  link: string;
+  description: string;
+  contact: string;
+  address: Address;
+}
 
 const AddCompany = () => {
   const [companyData, setCompanyData] = useState({
@@ -21,8 +39,61 @@ const AddCompany = () => {
     pincode: ''
   });
 
+  const [companies, setCompanies] = useState<CompanyData[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<CompanyData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const currentStep = showAddressForm ? 2 : 1;
+
+  // Fetch companies from API
+  const fetchCompanies = async () => {
+    try {
+      setIsLoading(true);
+      const res = await fetch('http://127.0.0.1:5000/api/v1/company', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Failed to fetch companies: ${res.status} ${res.statusText} - ${errorText}`);
+      }
+      const json = await res.json();
+      console.log('GET API Response:', json);
+      let companiesArray: CompanyData[] = [];
+      if (json.data) {
+        if (Array.isArray(json.data)) {
+          companiesArray = json.data;
+        } else if (json.data.company && Array.isArray(json.data.company)) {
+          companiesArray = json.data.company;
+        } else {
+          console.warn('GET API Response invalid format:', json.data);
+        }
+      } else {
+        console.warn('GET API Response missing data field:', json);
+      }
+      console.log('Parsed Companies:', companiesArray);
+      setCompanies(companiesArray);
+      setError(null);
+    } catch (err: any) {
+      const errorMessage = `Failed to load companies: ${err.message}`;
+      setError(errorMessage);
+      console.error('Fetch Error:', err.message);
+      setCompanies([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial fetch on mount
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
+
+  // Log companies state changes
+  useEffect(() => {
+    console.log('Companies State Updated:', companies);
+  }, [companies]);
 
   const handleCompanyChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setCompanyData({ ...companyData, [e.target.name]: e.target.value });
@@ -32,25 +103,77 @@ const AddCompany = () => {
     setAddressData({ ...addressData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ ...companyData, address: addressData });
-    // TODO: Replace console.log with API call
+    try {
+      if (addressData.address_line.startsWith('http')) {
+        setError('Address line should not be a URL');
+        return;
+      }
+      const payload = {
+        ...companyData,
+        address: { ...addressData, pincode: parseInt(addressData.pincode) || 0 }
+      };
+      console.log('POST Payload:', payload);
+      const res = await fetch('http://127.0.0.1:5000/api/v1/company', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Failed to add company: ${res.status} ${res.statusText} - ${errorText}`);
+      }
+      const newCompany = await res.json();
+      console.log('POST Response:', newCompany);
+      const newCompanyData = newCompany.data?.company || newCompany.data;
+      if (newCompanyData && typeof newCompanyData === 'object' && newCompanyData.name) {
+        setCompanies((prev) => {
+          const updated = [...prev, newCompanyData];
+          console.log('Updated Companies:', updated);
+          return updated;
+        });
+        await fetchCompanies(); // Refresh list
+      } else {
+        throw new Error('Invalid company data in response');
+      }
+      setCompanyData({ name: '', logo: '', link: '', description: '', contact: '' });
+      setAddressData({ address_line: '', area: '', city: '', state: '', country: '', pincode: '' });
+      setShowAddressForm(false);
+      setError(null);
+    } catch (err: any) {
+      setError(`Failed to add company: ${err.message}`);
+      console.error('Submit Error:', err.message);
+    }
   };
 
-  // Animation variants for form sections
+  const toggleCompanyDetails = (company: CompanyData) => {
+    setSelectedCompany(selectedCompany?.name === company.name ? null : company);
+  };
+
+  // Animation variants
   const formVariants = {
     hidden: { opacity: 0, x: -50 },
-    visible: { opacity: 1, x: 0, transition: { duration: 0.5, ease: "easeOut" } },
-    exit: { opacity: 0, x: 50, transition: { duration: 0.3, ease: "easeIn" } },
+    visible: { opacity: 1, x: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+    exit: { opacity: 0, x: 50, transition: { duration: 0.3, ease: 'easeIn' } },
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
+  };
+
+  const detailsVariants = {
+    hidden: { opacity: 0, height: 0, transition: { duration: 0.3 } },
+    visible: { opacity: 1, height: 'auto', transition: { duration: 0.3 } },
   };
 
   return (
     <div className="min-h-screen flex font-inter">
-      {/* Left 60% - Form Section */}
+      {/* Form Section */}
       <div className="w-full lg:w-3/5 bg-white flex items-center justify-center p-4 lg:p-8 relative z-10 my-8">
         <motion.div
-          className="w-full max-w-2xl mx-auto p-6 sm:p-8 bg-white shadow-2xl rounded-3xl space-y-6 transform transition-all duration-500 ease-in-out border-b-4 border-blue-600"
+          className="w-full max-w-2xl mx-auto p-6 sm:p-8 bg-white shadow-2xl rounded-3xl space-y-6 border-b-4 border-blue-600"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -59,8 +182,26 @@ const AddCompany = () => {
             {currentStep === 1 ? 'Company Details' : 'Company Address'}
           </h2>
 
+          {error && (
+            <motion.div
+              className="p-4 bg-red-100 text-red-700 rounded-lg"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              {error}
+              {error.includes('Failed to load companies') && (
+                <button
+                  onClick={fetchCompanies}
+                  className="ml-4 py-1 px-3 bg-blue-600 text-white rounded-lg"
+                >
+                  Retry
+                </button>
+              )}
+            </motion.div>
+          )}
+
           <AnimatePresence mode="wait">
-            {/* Company Details Section */}
             {currentStep === 1 && (
               <motion.form
                 key="company-form"
@@ -155,7 +296,6 @@ const AddCompany = () => {
               </motion.form>
             )}
 
-            {/* Address Details Section */}
             {currentStep === 2 && (
               <motion.form
                 key="address-form"
@@ -277,45 +417,148 @@ const AddCompany = () => {
         </motion.div>
       </div>
 
-      {/* Right 40% - Image & Stepper Section */}
-      <div className="hidden lg:flex lg:w-2/5 bg-gradient-to-br from-blue-500 to-blue-700 flex-col items-center justify-center p-8 relative overflow-hidden">
-        {/* Dynamic Image - Using placeholder images */}
-        <motion.img
-          key={currentStep}
-          src={currentStep === 1 ? '/company-details.png' : '/company-address.png'}
-          alt={currentStep === 1 ? 'Company details illustration' : 'Company address illustration'}
-          className="w-full h-auto rounded-xl object-contain"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          onError={(e) => {
-            e.currentTarget.onerror = null;
-            e.currentTarget.src = `https://placehold.co/600x800/2563EB/FFFFFF?text=Company+${currentStep === 1 ? 'Details' : 'Address'}`;
-          }}
-        />
-
-        {/* Stepper Indicator */}
-        <div className="flex space-x-4 mt-12">
-          {[1, 2].map((stepNum) => (
-            <div
-              key={stepNum}
-              className={`w-5 h-5 rounded-full transition-all duration-300 ease-in-out flex items-center justify-center
-                ${currentStep === stepNum ? 'bg-white scale-125 shadow-md' : 'bg-blue-300'}
-              `}
+      {/* Company List Section */}
+      <div className="w-full lg:w-2/5 bg-gradient-to-br from-blue-500 to-blue-700 flex-col p-4 lg:p-8 relative overflow-hidden">
+        <h3 className="text-2xl font-extrabold text-white mb-6">Existing Companies</h3>
+        <div className="overflow-y-auto max-h-[calc(100vh-150px)] space-y-4 pr-2">
+          {isLoading ? (
+            <motion.div
+              className="text-white text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
             >
-              {currentStep > stepNum && (
-                <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="text-white text-lg font-semibold mt-4">
-          Step {currentStep} of 2
+              Loading companies...
+            </motion.div>
+          ) : error ? (
+            <motion.div
+              className="text-red-200 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              {error}
+              <button
+                onClick={fetchCompanies}
+                className="ml-4 py-1 px-3 bg-blue-600 text-white rounded-lg"
+              >
+                Retry
+              </button>
+            </motion.div>
+          ) : companies.length === 0 ? (
+            <motion.div
+              className="text-white text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              No companies found.
+            </motion.div>
+          ) : (
+            <AnimatePresence>
+              {Array.isArray(companies) &&
+                companies.map((company, index) => (
+                  <motion.div
+                    key={company._id || company.name + index}
+                    className="bg-white rounded-xl shadow-lg cursor-pointer"
+                    variants={cardVariants}
+                    initial="hidden"
+                    animate="visible"
+                    transition={{ delay: index * 0.1 }}
+                    onClick={() => toggleCompanyDetails(company)}
+                  >
+                    <div className="flex items-center p-4">
+                      <img
+                        src={company.logo.startsWith('http') ? company.logo : `https://${company.logo}`}
+                        alt={`${company.name} logo`}
+                        className="w-12 h-12 rounded-full object-cover mr-4"
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://placehold.co/48x48/2563EB/FFFFFF?text=Logo';
+                        }}
+                      />
+                      <h4 className="text-lg font-bold text-gray-800 truncate">{company.name}</h4>
+                    </div>
+                    <AnimatePresence>
+                      {selectedCompany?.name === company.name && (
+                        <motion.div
+                          className="p-4 bg-gray-50 border-t border-gray-200"
+                          variants={detailsVariants}
+                          initial="hidden"
+                          animate="visible"
+                          exit="hidden"
+                        >
+                          <p className="text-sm text-gray-600 mb-2">{company.description}</p>
+                          <p className="text-sm text-gray-600 mb-2">
+                            <strong>Contact:</strong> {company.contact}
+                          </p>
+                          <p className="text-sm text-gray-600 mb-2">
+                            <strong>Address:</strong>{' '}
+                            {`${company.address.address_line}, ${company.address.area}, ${company.address.city}, ${company.address.state}, ${company.address.country} - ${company.address.pincode}`}
+                          </p>
+                          <a
+                            href={company.link.startsWith('http') ? company.link : `https://${company.link}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 text-sm hover:underline"
+                          >
+                            Visit Website
+                          </a>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                ))}
+            </AnimatePresence>
+          )}
         </div>
       </div>
-    
+
+      {/* Mobile Modal for Company Details */}
+      {selectedCompany && (
+        <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div
+            className="bg-white rounded-xl p-6 w-11/12 max-w-md max-h-[80vh] overflow-y-auto"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex items-center mb-4">
+              <img
+                src={selectedCompany.logo.startsWith('http') ? selectedCompany.logo : `https://${selectedCompany.logo}`}
+                alt={`${selectedCompany.name} logo`}
+                className="w-12 h-12 rounded-full object-cover mr-4"
+                onError={(e) => {
+                  e.currentTarget.src = 'https://placehold.co/48x48/2563EB/FFFFFF?text=Logo';
+                }}
+              />
+              <h4 className="text-lg font-bold text-gray-800">{selectedCompany.name}</h4>
+            </div>
+            <p className="text-sm text-gray-600 mb-2">{selectedCompany.description}</p>
+            <p className="text-sm text-gray-600 mb-2">
+              <strong>Contact:</strong> {selectedCompany.contact}
+            </p>
+            <p className="text-sm text-gray-600 mb-2">
+              <strong>Address:</strong>{' '}
+              {`${selectedCompany.address.address_line}, ${selectedCompany.address.area}, ${selectedCompany.address.city}, ${selectedCompany.address.state}, ${selectedCompany.address.country} - ${selectedCompany.address.pincode}`}
+            </p>
+            <a
+              href={selectedCompany.link.startsWith('http') ? selectedCompany.link : `https://${selectedCompany.link}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 text-sm hover:underline"
+            >
+              Visit Website
+            </a>
+            <button
+              className="w-full mt-4 py-2 px-4 bg-gray-300 text-gray-800 rounded-lg font-semibold"
+              onClick={() => setSelectedCompany(null)}
+            >
+              Close
+            </button>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };
