@@ -2,6 +2,10 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Calendar, BookOpen, Award } from 'lucide-react';
+import API, { setAxiosToken } from '../components/libs/axios';
+
+
+
 
 interface FormData {
   name: string;
@@ -44,12 +48,17 @@ const UserProfile = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+
+      const token = localStorage.getItem('accessToken');
+  if (token) setAxiosToken(token);
+  console.log('Access Token:', localStorage.getItem('accessToken'));
+console.log('Fetching student profile...');
+
     const fetchStudent = async () => {
       try {
-        const res = await fetch('http://127.0.0.1:5000/api/v1/student/6890471c037d79dc03dd419d');
-        if (!res.ok) throw new Error('Failed to fetch student data');
-        const json = await res.json();
-        const data = json.data.student;
+        const res = await API.get('/api/v1/me/');
+        if (res.status !== 200) throw new Error('Failed to fetch student data');
+        const data = res.data.data.user;
 
         const result = data.academic_details.result;
 
@@ -92,7 +101,7 @@ const UserProfile = () => {
           diplomaSemesterResults: diplomaResults,
           diplomaPassoutYear: result.diploma?.completion_year?.toString() || '',
 
-          cgpa: result.degree?.cgpa || "NA", 
+          cgpa: result.degree?.cgpa.toString() || "NA", 
           backlogs: result.degree?.backlogs || "NA", 
         };
 
@@ -113,6 +122,7 @@ const UserProfile = () => {
 
   if (error) return <div className="p-10 text-red-600">{error}</div>;
   if (!student) return <div className="p-10">Loading Profile...</div>;
+
 
   return (
     <div className="min-h-screen bg-gray-50 font-inter p-4 sm:p-6 lg:p-8 my-10">

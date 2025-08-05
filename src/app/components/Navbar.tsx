@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 import { usePathname } from 'next/navigation';
+import { useToken } from './context/TokenContext';
 
 type GoogleUser = {
   name: string;
@@ -16,6 +17,7 @@ const Navbar = () => {
   const [user, setUser] = useState<GoogleUser | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showAddDropdown, setShowAddDropdown] = useState(false);
+  const {token,setToken} = useToken();
 
   const desktopDropdownRef = useRef<HTMLDivElement>(null);
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
@@ -52,6 +54,8 @@ const Navbar = () => {
     const token = credentialResponse.credential;
     console.log(token);
     const decoded: any = jwtDecode(token);
+    setToken(token); 
+    localStorage.setItem('google-token', token); 
 
     const userData: GoogleUser = {
       name: decoded.name,
@@ -66,8 +70,11 @@ const Navbar = () => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token }),
+
     });
   };
+
+
 
   const handleSignOut = () => {
     console.log("🚪 Signing out...");

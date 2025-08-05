@@ -3,6 +3,10 @@ import React from 'react';
 import { motion, Variants, Transition } from 'framer-motion';
 import Createprofile from '../createprofile/page';
 import { useRouter } from 'next/navigation';
+import { useToken } from '../components/context/TokenContext';
+import API from './libs/axios';
+
+
 
 // Define easing as a valid Easing type
 type Easing = 'linear' | 'easeIn' | 'easeOut' | 'easeInOut';
@@ -66,8 +70,49 @@ const imageVariants: Variants = {
   },
 };
 
+// const loginstructure = { "googleId" : token }
+
+const Jwtloginid = async (token: string | null) => {
+  if (!token) return;
+
+  try {
+    const res = await API.post('/api/v1/auth/login', {googleId:  token }); // match backend schema
+    console.log('✅ JWT login success:', res.data);
+    const JwtToken = res.data.tokens
+  } catch (err) {
+    console.error('❌ JWT login failed:', err);
+  }
+};
+
 const MainBody = () => {
+  const { token, setAccessToken, setRefreshToken } = useToken();
   const router = useRouter();
+
+  const Jwtloginid = async (token:string|null) => {
+    if (!token) return;
+
+    try {
+      const res = await API.post('/api/v1/auth/login', {
+        googleId: token,
+      });
+
+      console.log('✅ JWT login success:', res.data);
+
+      const { accessToken, refreshToken } = res.data.data.tokens;
+
+      // Save tokens
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+
+      setAccessToken(accessToken);
+      setRefreshToken(refreshToken);
+
+      console.log(accessToken);
+      console.log(refreshToken);
+    } catch (err) {
+      console.error('❌ JWT login failed:', err);
+    }
+  };
   return (
     <div className="relative z-0 min-h-screen w-full overflow-x-hidden bg-white bg-[radial-gradient(100%_50%_at_50%_0%,rgba(0,163,255,0.60)_0,rgba(0,163,255,0.1)_50%,rgba(0,163,255,0)_100%)]">
       <motion.section
@@ -120,6 +165,9 @@ const MainBody = () => {
               variants={buttonVariants}
               whileHover="hover"
               whileTap="tap"
+              onClick={() => Jwtloginid(token)} // ✅ correct – only runs on click
+
+
             >
               Signin
             </motion.button>
