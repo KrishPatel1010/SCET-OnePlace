@@ -136,7 +136,7 @@ const handleChange = (
       const nested = prev[parent] as NestedObject;
 
       // Determine new value with proper parsing
-      let parsedValue: any;
+      let parsedValue: string | number | number[];
       if (parent === 'location' && child === 'pincode') parsedValue = parseInt(value) || 0;
       else if (parent === 'criteria' && child === 'min_result') parsedValue = parseFloat(value) || 0;
       else if (parent === 'criteria' && child === 'max_backlog') parsedValue = parseInt(value) || 0;
