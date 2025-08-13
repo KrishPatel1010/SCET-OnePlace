@@ -99,12 +99,15 @@ const AddOfferForm = () => {
       console.log('Parsed Offers:', offersArray);
       setOffers(offersArray);
       setError(null);
-    } catch (err: any) {
-      const errorMessage = `Failed to load offers: ${err.message}`;
-      setError(errorMessage);
-      console.error('Fetch Error:', err.message);
-      setOffers([]);
-    } finally {
+    } catch (err: unknown) {
+  const errorMessage =
+    err instanceof Error ? `Failed to load offers: ${err.message}` : 'Unknown error';
+  setError(errorMessage);
+  console.error('Fetch Error:', err);
+  setOffers([]);
+}
+
+     finally {
       setIsLoading(false);
     }
   };
@@ -225,10 +228,13 @@ const handleChange = (
         criteria: { min_result: 0, max_backlog: 0, passout_year: [], branch: '' },
       });
       setError(null);
-    } catch (err: any) {
-      setError(`Failed to add offer: ${err.message}`);
-      console.error('Submit Error:', err.message);
-    }
+    } catch (err: unknown) {
+  const errorMessage =
+    err instanceof Error ? `Failed to add offer: ${err.message}` : 'Unknown error';
+  setError(errorMessage);
+  console.error('Submit Error:', err);
+}
+
   };
 
   // Animation variants
