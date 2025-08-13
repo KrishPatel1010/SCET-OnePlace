@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 import { usePathname } from 'next/navigation';
 import { useToken } from './context/TokenContext';
@@ -11,13 +11,22 @@ type GoogleUser = {
   picture: string;
 };
 
+// Extend GoogleUser with JWT-specific fields
+interface JwtPayload extends GoogleUser {
+  sub: string; // Subject (user ID)
+  iss: string; // Issuer
+  aud: string; // Audience
+  exp: number; // Expiration time
+  iat: number; // Issued at
+}
+
 const Navbar = () => {
   const [isTransparent, setIsTransparent] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState<GoogleUser | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showAddDropdown, setShowAddDropdown] = useState(false);
-  const {token,setToken} = useToken();
+  const { setToken } = useToken();
 
   const desktopDropdownRef = useRef<HTMLDivElement>(null);
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
@@ -50,12 +59,15 @@ const Navbar = () => {
   }, []);
 
   // Google login success
-  const handleGoogleSuccess = async (credentialResponse: any) => {
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     const token = credentialResponse.credential;
-    console.log(token);
-    const decoded: any = jwtDecode(token);
-    setToken(token); 
-    localStorage.setItem('google-token', token); 
+    if (!token) {
+      console.error('No credential received');
+      return;
+    }
+    const decoded: JwtPayload = jwtDecode(token);
+    setToken(token);
+    localStorage.setItem('google-token', token);
 
     const userData: GoogleUser = {
       name: decoded.name,
@@ -66,18 +78,15 @@ const Navbar = () => {
     setUser(userData);
     localStorage.setItem('google-user', JSON.stringify(userData));
 
-    await fetch("http://localhost:3000/api/auth/google", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    await fetch('http://localhost:3000/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token }),
-
     });
   };
 
-
-
   const handleSignOut = () => {
-    console.log("🚪 Signing out...");
+    console.log('🚪 Signing out...');
     setUser(null);
     localStorage.removeItem('google-user');
     setShowDropdown(false);
@@ -93,9 +102,11 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 w-full h-20 z-50 p-4 md:p-6 flex justify-between items-center transition-all duration-300 ${
-        isTransparent ? 'bg-transparent backdrop-blur-sm' : 'backdrop-blur-md bg-white/80'
-      }`}>
+      <nav
+        className={`fixed top-0 left-0 w-full h-20 z-50 p-4 md:p-6 flex justify-between items-center transition-all duration-300 ${
+          isTransparent ? 'bg-transparent backdrop-blur-sm' : 'backdrop-blur-md bg-white/80'
+        }`}
+      >
         <div className="flex items-center space-x-4">
           <img src="sesuni.png" alt="Logo" className="h-10 w-10 md:h-12 md:w-12 rounded-full" />
           <h1 className="text-xl md:text-2xl font-bold text-black">SCET OnePlace</h1>
@@ -103,14 +114,20 @@ const Navbar = () => {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex space-x-6">
-          <a className="text-black font-bold hover:text-blue-600" href="#about">About Us</a>
-          <a className="text-black font-bold hover:text-blue-600" href="#policy">Policy</a>
-          <a className="text-black font-bold hover:text-blue-600" href="#contact">Contact Us</a>
+          <a className="text-black font-bold hover:text-blue-600" href="#about">
+            About Us
+          </a>
+          <a className="text-black font-bold hover:text-blue-600" href="#policy">
+            Policy
+          </a>
+          <a className="text-black font-bold hover:text-blue-600" href="#contact">
+            Contact Us
+          </a>
           {pathname === '/dashboard' && (
             <div className="relative">
               <button
-                onClick={() => setShowAddDropdown(prev => !prev)}
-                className="text-black font-bold  rounded inline-flex items-center"
+                onClick={() => setShowAddDropdown((prev) => !prev)}
+                className="text-black font-bold rounded inline-flex items-center"
               >
                 Add
                 <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -119,8 +136,12 @@ const Navbar = () => {
               </button>
               {showAddDropdown && (
                 <div className="absolute z-10 bg-white text-black shadow-lg mt-2 rounded-md w-40">
-                  <a href="/dashboard/addcompany" className="block px-4 py-2 hover:bg-gray-100">Add Company</a>
-                  <a href="/dashboard/addoffer" className="block px-4 py-2 hover:bg-gray-100">Add Offer</a>
+                  <a href="/dashboard/addcompany" className="block px-4 py-2 hover:bg-gray-100">
+                    Add Company
+                  </a>
+                  <a href="/dashboard/addoffer" className="block px-4 py-2 hover:bg-gray-100">
+                    Add Offer
+                  </a>
                 </div>
               )}
             </div>
@@ -134,7 +155,7 @@ const Navbar = () => {
               <img
                 src={user.picture}
                 alt={user.name}
-                onClick={() => setShowDropdown(prev => !prev)}
+                onClick={() => setShowDropdown((prev) => !prev)}
                 className="w-10 h-10 rounded-full border-2 border-blue-500 cursor-pointer"
               />
               {showDropdown && (
@@ -152,7 +173,10 @@ const Navbar = () => {
               )}
             </>
           ) : (
-            <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => console.error('❌ Google Login Failed')} />
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => console.error('❌ Google Login Failed')}
+            />
           )}
         </div>
 
@@ -169,18 +193,30 @@ const Navbar = () => {
       </nav>
 
       {/* Mobile Menu */}
-      <div className={`fixed top-20 left-0 w-full z-40 bg-white shadow-lg transition-transform duration-300 ease-in-out transform ${
-        isMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
-      } md:hidden`}>
+      <div
+        className={`fixed top-20 left-0 w-full z-40 bg-white shadow-lg transition-transform duration-300 ease-in-out transform ${
+          isMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
+        } md:hidden`}
+      >
         <div className="flex flex-col p-4 space-y-4">
-          <a className="text-black font-bold hover:text-blue-600" href="#about">About Us</a>
-          <a className="text-black font-bold hover:text-blue-600" href="#policy">Policy</a>
-          <a className="text-black font-bold hover:text-blue-600" href="#contact">Contact Us</a>
+          <a className="text-black font-bold hover:text-blue-600" href="#about">
+            About Us
+          </a>
+          <a className="text-black font-bold hover:text-blue-600" href="#policy">
+            Policy
+          </a>
+          <a className="text-black font-bold hover:text-blue-600" href="#contact">
+            Contact Us
+          </a>
           {pathname === '/dashboard' && (
-           <a className="text-black font-bold hover:text-blue-600">
-              Add Company
-            </a>
-            
+            <>
+              <a href="/dashboard/addcompany" className="text-black font-bold hover:text-blue-600">
+                Add Company
+              </a>
+              <a href="/dashboard/addoffer" className="text-black font-bold hover:text-blue-600">
+                Add Offer
+              </a>
+            </>
           )}
 
           {/* Mobile Profile/Login */}
@@ -190,7 +226,7 @@ const Navbar = () => {
                 <img
                   src={user.picture}
                   alt={user.name}
-                  onClick={() => setShowDropdown(prev => !prev)}
+                  onClick={() => setShowDropdown((prev) => !prev)}
                   className="w-12 h-12 rounded-full border-2 border-blue-500 shadow cursor-pointer"
                 />
                 {showDropdown && (
@@ -208,7 +244,10 @@ const Navbar = () => {
                 )}
               </>
             ) : (
-              <GoogleLogin onSuccess={handleGoogleSuccess} onError={() => console.error('❌ Google Login Failed')} />
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => console.error('❌ Google Login Failed')}
+              />
             )}
           </div>
         </div>

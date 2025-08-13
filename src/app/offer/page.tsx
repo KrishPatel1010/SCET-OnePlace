@@ -65,7 +65,8 @@ export default function ExpandableCard() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const ref = useRef<HTMLDivElement>(null);
+const ref = useRef<HTMLDivElement>(null);
+
   const id = useId();
 
   // Fetch data from backend
@@ -124,7 +125,8 @@ export default function ExpandableCard() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [active]);
 
-  useOutsideClick(ref, () => setActive(null));
+
+useOutsideClick(ref, () => setActive(null));
 
   // Map backend data to card structure
   const cards: Card[] = Array.isArray(jobs)
