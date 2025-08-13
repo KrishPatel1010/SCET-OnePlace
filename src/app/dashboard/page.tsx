@@ -1,20 +1,12 @@
 'use client';
-import React, { FC } from 'react';
+import React from 'react';
 
-interface DashBoardProps {
-  userName?: string; // Optional, so you can pass a name dynamically
-}
-
-const DashBoard: FC<DashBoardProps> = ({ userName = 'XYZ' }) => {
-  const startYear = 1995;
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: currentYear - startYear + 1 }, (_, i) => startYear + i);
-
+const DashBoard = () => {
   return (
     <div className="min-h-screen w-full bg-white bg-[radial-gradient(100%_50%_at_50%_0%,rgba(0,163,255,0.60)_0,rgba(0,163,255,0.1)_50%,rgba(0,163,255,0)_100%)] mt-10 px-4 py-10 md:px-12 font-inter">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl md:text-4xl font-extrabold text-blue-800 mb-8 text-center">
-          Welcome {userName}
+          Welcome XYZ
         </h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -32,17 +24,21 @@ const DashBoard: FC<DashBoardProps> = ({ userName = 'XYZ' }) => {
                   <option>Mechanical Engineering</option>
                   <option>Civil Engineering</option>
                 </select>
-                <select className="text-sm px-3 py-1 rounded-full bg-white font-semibold shadow-sm border border-gray-300">
+                <select className="text-sm px-3 py-1 rounded-full bg-white font-semibold shadow-sm border border-gray-300 overflow-hidden">
                   <option>Year</option>
-                  {years.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
+                  {Array.from({ length: new Date().getFullYear() - 1994 }, (_, i) => {
+                    const year = 1995 + i;
+                    return (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             </div>
             <div className="h-32 flex items-center justify-center text-gray-500">
+              {/* Placeholder for content */}
               Data here
             </div>
           </div>
