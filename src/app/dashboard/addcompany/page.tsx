@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Variants } from "framer-motion";
+import { easeIn, easeOut } from "framer-motion";
 
 interface Address {
   address_line: string;
@@ -171,18 +172,18 @@ const AddCompany = () => {
   //   exit: { opacity: 0, x: 50, transition: { duration: 0.3, ease: 'easeIn' } },
   // };
 
-  const formVariants: Variants = {
+const formVariants: Variants = {
   hidden: { opacity: 0, x: -50 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: { duration: 0.5, ease: "easeOut" }
+  visible: { 
+    opacity: 1, 
+    x: 0, 
+    transition: { duration: 0.5, ease: easeOut } 
   },
-  exit: {
-    opacity: 0,
-    x: 50,
-    transition: { duration: 0.3, ease: "easeIn" }
-  }
+  exit: { 
+    opacity: 0, 
+    x: 50, 
+    transition: { duration: 0.3, ease: easeIn } 
+  },
 };
 
   const cardVariants: Variants = {
