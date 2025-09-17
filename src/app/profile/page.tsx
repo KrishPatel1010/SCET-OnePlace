@@ -49,10 +49,10 @@ const UserProfile = () => {
 
   useEffect(() => {
 
-      const token = localStorage.getItem('accessToken');
-  if (token) setAxiosToken(token);
-  console.log('Access Token:', localStorage.getItem('accessToken'));
-console.log('Fetching student profile...');
+    const token = localStorage.getItem('accessToken');
+    if (token) setAxiosToken(token);
+    console.log('Access Token:', localStorage.getItem('accessToken'));
+    console.log('Fetching student profile...');
 
     const fetchStudent = async () => {
       try {
@@ -64,10 +64,10 @@ console.log('Fetching student profile...');
 
         // Map diploma semester results if available
         const diplomaResults = result.diploma?.result
-          ? Object.entries(result.diploma.result)
-              .filter(([key]) => key.startsWith('sem'))
-              .sort(([a], [b]) => parseInt(a.replace(/\D/g, '')) - parseInt(b.replace(/\D/g, '')))
-              .map(([_, value]) => value.toString())
+          ? (Object.entries(result.diploma.result as Record<string, number>) as [string, number][])
+            .filter(([key]) => key.startsWith('sem'))
+            .sort(([a], [b]) => parseInt(a.replace(/\D/g, '')) - parseInt(b.replace(/\D/g, '')))
+            .map(([_, value]) => String(value))
           : [];
 
         const studentProfile: StudentProfile = {
@@ -101,8 +101,8 @@ console.log('Fetching student profile...');
           diplomaSemesterResults: diplomaResults,
           diplomaPassoutYear: result.diploma?.completion_year?.toString() || '',
 
-          cgpa: result.degree?.cgpa.toString() || "NA", 
-          backlogs: result.degree?.backlogs || "NA", 
+          cgpa: result.degree?.cgpa.toString() || "NA",
+          backlogs: result.degree?.backlogs || "NA",
         };
 
         setStudent(studentProfile);

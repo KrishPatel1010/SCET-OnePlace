@@ -9,7 +9,6 @@ const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   if (!googleClientId) {
-    // eslint-disable-next-line no-console
     console.warn('NEXT_PUBLIC_GOOGLE_CLIENT_ID is not set. Google login will not work in production.');
   }
 
