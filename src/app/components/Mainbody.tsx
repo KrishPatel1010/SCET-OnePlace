@@ -178,7 +178,7 @@ const MainBody = () => {
           variants={imageVariants}
         >
           <motion.img
-            src="iso.png"
+            src="/iso.png"
             alt="Hero"
             className="w-full h-auto max-h-[70vh] md:max-h-[100%] object-contain"
             variants={imageVariants}

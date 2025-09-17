@@ -89,9 +89,9 @@ const Createprofile = () => {
 
   // Image URLs for each step (using placeholder images for demonstration)
   const stepImages: { [key: number]: string } = {
-    1: 'personal_detail.png', // Placeholder for personal details image
-    2: 'address.png',  // Placeholder for address details image
-    3: 'academic.png',// Placeholder for academic details image
+    1: '/personal_detail.png',
+    2: '/address.png',
+    3: '/academic.png',
   };
 
   // Handle changes for address form fields
@@ -159,95 +159,95 @@ const Createprofile = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-// Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!token) {
-      console.error('User not authenticated. Please sign in.');
-      return;
-    }
-    
-    // --- START: Data Restructuring to match your desired format ---
-    const restructuredData = {
-      name: formData.name,
-      enrollment_no: formData.enrollment_no,
-      dob: formData.dob,
-      email: formData.email,
-      googleId: token,
-      contact: formData.contact,
-      gender: formData.gender,
-      caste: formData.caste,
-      academic_details: {
-        passout_year: parseInt(academicData.passoutYear, 10), // Convert to number
-        result: {
-          ssc: {
-            percentage: parseFloat(academicData.tenthResult), // Convert to number
-            completion_year: parseInt(academicData.tenthPassoutYear, 10), // Convert to number
-          },
-          hsc: academicData.qualificationType === 'twelfth' ? {
-            percentage: parseFloat(academicData.twelfthResult), // Convert to number
-            completion_year: parseInt(academicData.twelfthPassoutYear, 10), // Convert to number
-          } : undefined, // Conditionally include or set to undefined
-          diploma: academicData.qualificationType === 'diploma' ? {
-            result: academicData.diplomaSemesterResults.reduce((acc: Record<string, number>, current, index) => {
-              acc[`sem${index + 1}`] = parseFloat(current);
-              return acc;
-            }, {} as Record<string, number>),
-            completion_year: parseInt(academicData.diplomaPassoutYear, 10), // Convert to number
-          } : undefined, // Conditionally include or set to undefined
-          degree: {
-            result: academicData.semesterResults.reduce((acc: Record<string, number>, current, index) => {
-              acc[`sem${index + 1}`] = parseFloat(current);
-              return acc;
-            }, {} as Record<string, number>),
-            completion_year: parseInt(academicData.passoutYear, 10), // You already have passoutYear
-//             cgpa: parseFloat(academicData.cgpa), // Convert to number
-            backlogs: parseInt(academicData.backlogs, 10), // Convert to number
-          },
-        },
-      },
-      address: {
-        address_line: addressData.fullAddressLine,
-        area: addressData.area,
-        city: addressData.city,
-        state: addressData.state,
-        country: addressData.country,
-        pincode: parseInt(addressData.pinCode, 10), // Convert to number
-      },
-    };
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token) {
+      console.error('User not authenticated. Please sign in.');
+      return;
+    }
 
-    // Remove keys with 'undefined' values
-    if (!restructuredData.academic_details.result.hsc) {
-      delete restructuredData.academic_details.result.hsc;
-    }
-    if (!restructuredData.academic_details.result.diploma) {
-      delete restructuredData.academic_details.result.diploma;
-    }
+    // --- START: Data Restructuring to match your desired format ---
+    const restructuredData = {
+      name: formData.name,
+      enrollment_no: formData.enrollment_no,
+      dob: formData.dob,
+      email: formData.email,
+      googleId: token,
+      contact: formData.contact,
+      gender: formData.gender,
+      caste: formData.caste,
+      academic_details: {
+        passout_year: parseInt(academicData.passoutYear, 10), // Convert to number
+        result: {
+          ssc: {
+            percentage: parseFloat(academicData.tenthResult), // Convert to number
+            completion_year: parseInt(academicData.tenthPassoutYear, 10), // Convert to number
+          },
+          hsc: academicData.qualificationType === 'twelfth' ? {
+            percentage: parseFloat(academicData.twelfthResult), // Convert to number
+            completion_year: parseInt(academicData.twelfthPassoutYear, 10), // Convert to number
+          } : undefined, // Conditionally include or set to undefined
+          diploma: academicData.qualificationType === 'diploma' ? {
+            result: academicData.diplomaSemesterResults.reduce((acc: Record<string, number>, current, index) => {
+              acc[`sem${index + 1}`] = parseFloat(current);
+              return acc;
+            }, {} as Record<string, number>),
+            completion_year: parseInt(academicData.diplomaPassoutYear, 10), // Convert to number
+          } : undefined, // Conditionally include or set to undefined
+          degree: {
+            result: academicData.semesterResults.reduce((acc: Record<string, number>, current, index) => {
+              acc[`sem${index + 1}`] = parseFloat(current);
+              return acc;
+            }, {} as Record<string, number>),
+            completion_year: parseInt(academicData.passoutYear, 10), // You already have passoutYear
+            //             cgpa: parseFloat(academicData.cgpa), // Convert to number
+            backlogs: parseInt(academicData.backlogs, 10), // Convert to number
+          },
+        },
+      },
+      address: {
+        address_line: addressData.fullAddressLine,
+        area: addressData.area,
+        city: addressData.city,
+        state: addressData.state,
+        country: addressData.country,
+        pincode: parseInt(addressData.pinCode, 10), // Convert to number
+      },
+    };
 
-    console.log('Final data to be sent:', restructuredData);
-    // --- END: Data Restructuring ---
+    // Remove keys with 'undefined' values
+    if (!restructuredData.academic_details.result.hsc) {
+      delete restructuredData.academic_details.result.hsc;
+    }
+    if (!restructuredData.academic_details.result.diploma) {
+      delete restructuredData.academic_details.result.diploma;
+    }
 
-    try {
-      // Send restructured data to the backend
-      const res = await fetch('http://localhost:5000/api/v1/student/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(restructuredData),
-      });
+    console.log('Final data to be sent:', restructuredData);
+    // --- END: Data Restructuring ---
 
-      const data = await res.json();
-      if (res.ok) {
-        console.log('✅ Profile created successfully:', data);
-        // Redirect or show success message
-        // router.push('/dashboard');
-      } else {
-        console.error('❌ Failed to create profile:', data);
-        // Handle error, show user a message
-      }
-    } catch (error) {
-      console.error('❌ Network error or API call failed:', error);
-    }
-  };
+    try {
+      // Send restructured data to the backend
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ''}/api/v1/student/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(restructuredData),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        console.log('✅ Profile created successfully:', data);
+        // Redirect or show success message
+        // router.push('/dashboard');
+      } else {
+        console.error('❌ Failed to create profile:', data);
+        // Handle error, show user a message
+      }
+    } catch (error) {
+      console.error('❌ Network error or API call failed:', error);
+    }
+  };
 
   // Load user data from localStorage on component mount
   useEffect(() => {

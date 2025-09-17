@@ -73,7 +73,7 @@ export default function ExpandableCard() {
     async function fetchJobs() {
       try {
         setLoading(true);
-        const res = await fetch("http://127.0.0.1:5000/api/v1/offer");
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ''}/api/v1/offer`);
         if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         const data: { success: boolean; data: { offer: Job[] } } = await res.json();
         setJobs(data.success && Array.isArray(data.data.offer) ? data.data.offer : []);

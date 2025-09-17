@@ -5,12 +5,10 @@ let token: string | null = null;
 
 export const setAxiosToken = (newToken: string) => {
   token = newToken;
-
-  console.log("axios token", token)
 };
 
 const API = axios.create({
-  baseURL: 'http://localhost:5000',
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || '',
 });
 
 API.interceptors.request.use(

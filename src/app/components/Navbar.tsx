@@ -78,7 +78,7 @@ const Navbar = () => {
     setUser(userData);
     localStorage.setItem('google-user', JSON.stringify(userData));
 
-    await fetch('http://localhost:3000/api/auth/google', {
+    await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || ''}/api/auth/google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token }),
@@ -108,7 +108,7 @@ const Navbar = () => {
         }`}
       >
         <div className="flex items-center space-x-4">
-          <img src="sesuni.png" alt="Logo" className="h-10 w-10 md:h-12 md:w-12 rounded-full" />
+          <img src="/sesuni.png" alt="Logo" className="h-10 w-10 md:h-12 md:w-12 rounded-full" />
           <h1 className="text-xl md:text-2xl font-bold text-black">SCET OnePlace</h1>
         </div>
 

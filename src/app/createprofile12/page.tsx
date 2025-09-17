@@ -142,7 +142,7 @@ const Createprofile = () => {
     e.preventDefault();
     if (!token) return;
 
-    const res = await fetch('http://localhost:3000/api/student/create', {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || ''}/api/student/create`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...formData, ...addressData, ...academicData, token }),

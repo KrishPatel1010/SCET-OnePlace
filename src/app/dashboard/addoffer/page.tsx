@@ -74,7 +74,7 @@ const AddOfferForm = () => {
   const fetchOffers = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch('http://127.0.0.1:5000/api/v1/offer', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ''}/api/v1/offer`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -194,7 +194,7 @@ const handleChange = (
         },
       };
       console.log('POST Payload:', payload);
-      const res = await fetch('http://127.0.0.1:5000/api/v1/offer', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ''}/api/v1/offer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
